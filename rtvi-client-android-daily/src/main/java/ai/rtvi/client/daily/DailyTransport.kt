@@ -23,6 +23,7 @@ import android.util.Log
 import co.daily.CallClient
 import co.daily.CallClientListener
 import co.daily.model.CallState
+import co.daily.model.MediaState
 import co.daily.model.MeetingToken
 import co.daily.model.ParticipantLeftReason
 import co.daily.model.Recipient
@@ -64,6 +65,7 @@ class DailyTransport(
 
         val participants = mutableMapOf<ParticipantId, Participant>()
         var botUser: Participant? = null
+        var clientReady: Boolean = false
 
         override fun onLocalAudioLevel(audioLevel: Float) {
             transportContext.callbacks.onUserAudioLevel(audioLevel)
@@ -100,6 +102,19 @@ class DailyTransport(
         override fun onParticipantUpdated(participant: co.daily.model.Participant) {
             updateParticipant(participant)
             updateBotUser()
+
+            if (!clientReady && participant.id.toRtvi() == botUser?.id) {
+                if (participant.media?.microphone?.state == MediaState.playable) {
+
+                    Log.i(TAG, "Sending client-ready")
+
+                    clientReady = true
+                    sendMessage(MsgClientToServer(
+                        type = "client-ready",
+                        data = null
+                    ))
+                }
+            }
         }
 
         private fun updateBotUser() {
@@ -122,6 +137,7 @@ class DailyTransport(
                 CallState.leaving -> {}
                 CallState.left -> {
                     botUser = null
+                    clientReady = false
                     participants.clear()
                     setState(TransportState.Disconnected)
                     transportContext.callbacks.onDisconnected()
