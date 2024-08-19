@@ -65,21 +65,6 @@ class DailyTransport(
         val participants = mutableMapOf<ParticipantId, Participant>()
         var botUser: Participant? = null
 
-        private val audioLevelProcessorBot = AudioLevelProcessor(
-            thread = thread,
-            onIsSpeaking = {
-                val bot = botUser
-
-                if (bot != null) {
-                    if (it) {
-                        transportContext.callbacks.onBotStartedSpeaking(bot)
-                    } else {
-                        transportContext.callbacks.onBotStoppedSpeaking(bot)
-                    }
-                }
-            }
-        )
-
         override fun onLocalAudioLevel(audioLevel: Float) {
             transportContext.callbacks.onUserAudioLevel(audioLevel)
         }
@@ -91,11 +76,6 @@ class DailyTransport(
                 val participant = participants[rtviId]
 
                 if (participant != null) {
-
-                    if (botUser?.id == rtviId) {
-                        audioLevelProcessorBot.onLevelChanged(level)
-                    }
-
                     transportContext.callbacks.onRemoteAudioLevel(
                         level = level,
                         participant = participant
