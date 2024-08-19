@@ -47,7 +47,7 @@ dependencies {
     implementation(libs.daily.android.client)
 
     //api(project(":rtvi-client-android"))
-    implementation(libs.rtvi.client)
+    api(libs.rtvi.client)
 
     androidTestImplementation(libs.androidx.runner)
     androidTestImplementation(libs.androidx.rules)
@@ -66,7 +66,7 @@ publishing {
         register<MavenPublication>("release") {
             groupId = "ai.rtvi"
             artifactId = "client-daily"
-            version = "0.1.0"
+            version = "0.1.1"
 
             pom {
                 name.set("RTVI Client Daily Transport")
