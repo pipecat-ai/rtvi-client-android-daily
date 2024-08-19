@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.jetbrains.kotlin.serialization)
     alias(libs.plugins.jetbrains.dokka)
+    `maven-publish`
+    signing
 }
 
 android {
@@ -45,10 +47,64 @@ dependencies {
     implementation(libs.daily.android.client)
 
     //api(project(":rtvi-client-android"))
-    implementation("ai.rtvi:rtvi-client-android:0.1.0")
+    implementation(libs.rtvi.client)
 
     androidTestImplementation(libs.androidx.runner)
     androidTestImplementation(libs.androidx.rules)
     androidTestImplementation(libs.kotlinx.coroutines.test)
+}
 
+publishing {
+    repositories {
+        maven {
+            url = rootProject.layout.buildDirectory.dir("RTVILocalRepo").get().asFile.toURI()
+            name = "RTVILocalRepo"
+        }
+    }
+
+    publications {
+        register<MavenPublication>("release") {
+            groupId = "ai.rtvi"
+            artifactId = "client-daily"
+            version = "0.1.0"
+
+            pom {
+                name.set("RTVI Client Daily Transport")
+                description.set("Daily RTVI client library for Android")
+                url.set("https://github.com/rtvi-ai/rtvi-client-android-daily")
+
+                developers {
+                    developer {
+                        id.set("rtvi.ai")
+                        name.set("rtvi.ai")
+                    }
+                }
+
+                licenses {
+                    license {
+                        name.set("BSD 2-Clause License")
+                        url.set("https://github.com/rtvi-ai/rtvi-client-android-daily/blob/main/LICENSE")
+                    }
+                }
+
+                scm {
+                    connection.set("scm:git:git://github.com/rtvi-ai/rtvi-client-android-daily.git")
+                    developerConnection.set("scm:git:ssh://github.com:rtvi-ai/rtvi-client-android-daily.git")
+                    url.set("https://github.com/rtvi-ai/rtvi-client-android-daily")
+                }
+            }
+
+            afterEvaluate {
+                from(components["release"])
+            }
+        }
+    }
+}
+
+signing {
+    val signingKey = System.getenv("RTVI_GPG_SIGNING_KEY")
+    val signingPassphrase = System.getenv("RTVI_GPG_SIGNING_PASSPHRASE")
+
+    useInMemoryPgpKeys(signingKey, signingPassphrase)
+    sign(publishing.publications)
 }

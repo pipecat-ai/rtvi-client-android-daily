@@ -35,3 +35,12 @@ jobs:
 
       - name: Build Daily transport
         run: ./gradlew :rtvi-client-android-daily:assembleRelease
+
+      - name: Generate Maven repo
+        run: ./gradlew :rtvi-client-android-daily:publishAllPublicationsToRTVILocalRepoRepository
+
+      - name: Upload Maven repo
+        uses: actions/upload-artifact@v4
+        with:
+          name: RTVIClientAndroidDaily-Repo
+          path: build/RTVILocalRepo
