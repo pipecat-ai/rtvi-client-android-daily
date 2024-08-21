@@ -61,11 +61,14 @@ class DailyTransport(
 
     private var call: CallClient? = null
 
+    private var expiry: Long? = null
+
     private val callListener = object : CallClientListener {
 
         val participants = mutableMapOf<ParticipantId, Participant>()
         var botUser: Participant? = null
         var clientReady: Boolean = false
+        var tracks: Tracks? = null
 
         override fun onLocalAudioLevel(audioLevel: Float) {
             transportContext.callbacks.onUserAudioLevel(audioLevel)
@@ -88,7 +91,7 @@ class DailyTransport(
 
         override fun onParticipantJoined(participant: co.daily.model.Participant) {
             updateParticipant(participant)
-            updateBotUser()
+            updateBotUserAndTracks()
         }
 
         override fun onParticipantLeft(
@@ -96,12 +99,12 @@ class DailyTransport(
             reason: ParticipantLeftReason
         ) {
             participants.remove(participant.id.toRtvi())
-            updateBotUser()
+            updateBotUserAndTracks()
         }
 
         override fun onParticipantUpdated(participant: co.daily.model.Participant) {
             updateParticipant(participant)
-            updateBotUser()
+            updateBotUserAndTracks()
 
             if (!clientReady && participant.id.toRtvi() == botUser?.id) {
                 if (participant.media?.microphone?.state == MediaState.playable) {
@@ -109,16 +112,24 @@ class DailyTransport(
                     Log.i(TAG, "Sending client-ready")
 
                     clientReady = true
-                    sendMessage(MsgClientToServer(
-                        type = "client-ready",
-                        data = null
-                    ))
+                    sendMessage(
+                        MsgClientToServer(
+                            type = "client-ready",
+                            data = null
+                        )
+                    )
                 }
             }
         }
 
-        private fun updateBotUser() {
+        private fun updateBotUserAndTracks() {
             botUser = participants.values.firstOrNull { !it.local }
+            val newTracks = tracks()
+
+            if (newTracks != tracks) {
+                tracks = newTracks
+                transportContext.callbacks.onTracksUpdated(newTracks)
+            }
         }
 
         private fun updateParticipant(participant: co.daily.model.Participant) {
@@ -131,7 +142,7 @@ class DailyTransport(
                 CallState.joining -> {}
                 CallState.joined -> {
                     call?.participants()?.all?.values?.forEach(::updateParticipant)
-                    updateBotUser()
+                    updateBotUserAndTracks()
                 }
 
                 CallState.leaving -> {}
@@ -261,6 +272,13 @@ class DailyTransport(
                                     return@join
                                 }
 
+                                expiry = it.success?.callConfig?.let { config ->
+                                    listOfNotNull(
+                                        config.roomExpiration,
+                                        config.tokenExpiration
+                                    ).minOrNull()
+                                }
+
                                 setState(TransportState.Connected)
                                 transportContext.callbacks.onConnected()
                                 promise.resolveOk(Unit)
@@ -365,6 +383,8 @@ class DailyTransport(
                 }
             }
         }
+
+    override fun expiry() = thread.assertCurrent { expiry }
 
     override fun enableCam(enable: Boolean): Future<Unit, VoiceError> =
         thread.runOnThreadReturningFuture {

@@ -42,11 +42,9 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.daily.android.client)
 
-    //api(project(":rtvi-client-android"))
+    api(libs.daily.android.client)
     api(libs.rtvi.client)
 
     androidTestImplementation(libs.androidx.runner)
@@ -66,7 +64,7 @@ publishing {
         register<MavenPublication>("release") {
             groupId = "ai.rtvi"
             artifactId = "client-daily"
-            version = "0.1.2"
+            version = "0.1.3"
 
             pom {
                 name.set("RTVI Client Daily Transport")
@@ -105,6 +103,8 @@ signing {
     val signingKey = System.getenv("RTVI_GPG_SIGNING_KEY")
     val signingPassphrase = System.getenv("RTVI_GPG_SIGNING_PASSPHRASE")
 
-    useInMemoryPgpKeys(signingKey, signingPassphrase)
-    sign(publishing.publications)
+    if (!signingKey.isNullOrEmpty() || !signingPassphrase.isNullOrEmpty()) {
+        useInMemoryPgpKeys(signingKey, signingPassphrase)
+        sign(publishing.publications)
+    }
 }
