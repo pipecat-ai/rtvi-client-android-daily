@@ -1,22 +1,20 @@
 [versions]
 agp = "8.5.1"
-daily-android-client = "0.22.1"
+daily-android-client = "0.23.0"
 kotlin = "2.0.0"
 coreKtx = "1.13.1"
-appcompat = "1.7.0"
 kotlinxCoroutinesTest = "1.8.1"
 kotlinxSerializationJson = "1.7.1"
 kotlinxSerializationPlugin = "2.0.0"
 dokka = "1.9.20"
 androidxTest = "1.6.1"
-rtviClient = "0.1.1"
+rtviClient = "0.1.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-rules = { module = "androidx.test:rules", version.ref = "androidxTest" }
 androidx-runner = { module = "androidx.test:runner", version.ref = "androidxTest" }
 daily-android-client = { module = "co.daily:client", version.ref = "daily-android-client" }
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 rtvi-client = { module = "ai.rtvi:client", version.ref = "rtviClient" }
