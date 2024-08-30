@@ -426,7 +426,9 @@ class DailyTransport(
     }
 
     override fun release() {
+        thread.assertCurrent()
         call?.release()
+        call = null
     }
 
     private fun <V> withCall(action: (CallClient) -> Future<V, VoiceError>): Future<V, VoiceError> {
