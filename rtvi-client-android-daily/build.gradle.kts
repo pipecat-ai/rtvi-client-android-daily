@@ -64,7 +64,7 @@ publishing {
         register<MavenPublication>("release") {
             groupId = "ai.rtvi"
             artifactId = "client-daily"
-            version = "0.1.3"
+            version = "0.1.4"
 
             pom {
                 name.set("RTVI Client Daily Transport")
