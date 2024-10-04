@@ -1,7 +1,7 @@
 package ai.rtvi.client.daily
 
 import ai.rtvi.client.result.Promise
-import ai.rtvi.client.result.VoiceError
+import ai.rtvi.client.result.RTVIError
 import ai.rtvi.client.types.MediaDeviceId
 import ai.rtvi.client.types.MediaDeviceInfo
 import ai.rtvi.client.types.MediaTrackId
@@ -17,12 +17,12 @@ import kotlinx.serialization.json.contentOrNull
 
 internal val JSON_INSTANCE = Json { ignoreUnknownKeys = true }
 
-internal fun RequestError?.toVoiceError() =
-    VoiceError.OtherError("Error from Daily client: ${this?.msg}")
+internal fun RequestError?.toRTVIError() =
+    RTVIError.OtherError("Error from Daily client: ${this?.msg}")
 
-internal fun Promise<Unit, VoiceError>.resolveWithDailyResult(result: RequestResult) {
+internal fun Promise<Unit, RTVIError>.resolveWithDailyResult(result: RequestResult) {
     if (result.isError) {
-        resolveErr(result.error.toVoiceError())
+        resolveErr(result.error.toRTVIError())
     } else {
         resolveOk(Unit)
     }

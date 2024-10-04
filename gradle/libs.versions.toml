@@ -1,14 +1,14 @@
 [versions]
-agp = "8.5.1"
-daily-android-client = "0.23.0"
-kotlin = "2.0.0"
+agp = "8.5.2"
+daily-android-client = "0.24.0"
+kotlin = "2.0.20"
 coreKtx = "1.13.1"
 kotlinxCoroutinesTest = "1.8.1"
 kotlinxSerializationJson = "1.7.1"
-kotlinxSerializationPlugin = "2.0.0"
+kotlinxSerializationPlugin = "2.0.20"
 dokka = "1.9.20"
 androidxTest = "1.6.1"
-rtviClient = "0.1.4"
+rtviClient = "0.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

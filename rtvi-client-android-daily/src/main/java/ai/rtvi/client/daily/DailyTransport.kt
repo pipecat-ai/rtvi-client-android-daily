@@ -1,7 +1,7 @@
 package ai.rtvi.client.daily
 
 import ai.rtvi.client.result.Future
-import ai.rtvi.client.result.VoiceError
+import ai.rtvi.client.result.RTVIError
 import ai.rtvi.client.result.resolvedPromiseErr
 import ai.rtvi.client.result.resolvedPromiseOk
 import ai.rtvi.client.result.withPromise
@@ -55,7 +55,7 @@ class DailyTransport(
     private val thread = transportContext.thread
 
     private val appContext = androidContext.applicationContext
-    private var state = TransportState.Idle
+    private var state = TransportState.Disconnected
 
     private var devicesInitialized = false
 
@@ -197,7 +197,7 @@ class DailyTransport(
         }
     }
 
-    override fun initDevices(): Future<Unit, VoiceError> = withPromise(thread) { promise ->
+    override fun initDevices(): Future<Unit, RTVIError> = withPromise(thread) { promise ->
 
         thread.runOnThread {
 
@@ -223,7 +223,7 @@ class DailyTransport(
                     }
                 }
 
-                if (state == TransportState.Idle) {
+                if (state == TransportState.Disconnected) {
                     setState(TransportState.Initialized)
                 }
 
@@ -232,12 +232,12 @@ class DailyTransport(
 
             } catch (e: Exception) {
                 Log.e(TAG, "Exception in initDevices", e)
-                promise.resolveErr(VoiceError.ExceptionThrown(e))
+                promise.resolveErr(RTVIError.ExceptionThrown(e))
             }
         }
     }
 
-    override fun connect(authBundle: AuthBundle): Future<Unit, VoiceError> =
+    override fun connect(authBundle: AuthBundle): Future<Unit, RTVIError> =
         thread.runOnThreadReturningFuture {
 
             Log.i(TAG, "connect(${authBundle.data})")
@@ -247,7 +247,7 @@ class DailyTransport(
             } catch (e: Exception) {
                 return@runOnThreadReturningFuture resolvedPromiseErr(
                     thread,
-                    VoiceError.ExceptionThrown(e)
+                    RTVIError.ExceptionThrown(e)
                 )
             }
 
@@ -268,7 +268,7 @@ class DailyTransport(
                             ) {
                                 if (it.isError) {
                                     setState(TransportState.Error)
-                                    promise.resolveErr(it.error.toVoiceError())
+                                    promise.resolveErr(it.error.toRTVIError())
                                     return@join
                                 }
 
@@ -288,7 +288,7 @@ class DailyTransport(
                 }
         }
 
-    override fun disconnect(): Future<Unit, VoiceError> = thread.runOnThreadReturningFuture {
+    override fun disconnect(): Future<Unit, RTVIError> = thread.runOnThreadReturningFuture {
         withCall { callClient ->
             withPromise(thread) { promise ->
                 callClient.leave(promise::resolveWithDailyResult)
@@ -298,7 +298,7 @@ class DailyTransport(
 
     override fun sendMessage(
         message: MsgClientToServer,
-    ): Future<Unit, VoiceError> = thread.runOnThreadReturningFuture {
+    ): Future<Unit, RTVIError> = thread.runOnThreadReturningFuture {
         withCall { callClient ->
             withPromise(thread) { promise ->
                 callClient.sendAppMessage(
@@ -321,10 +321,10 @@ class DailyTransport(
         transportContext.callbacks.onTransportStateChanged(state)
     }
 
-    override fun getAllCams(): Future<List<MediaDeviceInfo>, VoiceError> =
+    override fun getAllCams(): Future<List<MediaDeviceInfo>, RTVIError> =
         resolvedPromiseOk(thread, getAllCamsInternal())
 
-    override fun getAllMics(): Future<List<MediaDeviceInfo>, VoiceError> =
+    override fun getAllMics(): Future<List<MediaDeviceInfo>, RTVIError> =
         resolvedPromiseOk(thread, getAllMicsInternal())
 
     private fun getAllCamsInternal() =
@@ -333,7 +333,7 @@ class DailyTransport(
     private fun getAllMicsInternal() =
         call?.availableDevices()?.audio?.map { it.toRtvi() } ?: emptyList()
 
-    override fun updateMic(micId: MediaDeviceId): Future<Unit, VoiceError> =
+    override fun updateMic(micId: MediaDeviceId): Future<Unit, RTVIError> =
         thread.runOnThreadReturningFuture {
             withCall { callClient ->
                 withPromise(thread) { promise ->
@@ -342,7 +342,7 @@ class DailyTransport(
             }
         }
 
-    override fun updateCam(camId: MediaDeviceId): Future<Unit, VoiceError> =
+    override fun updateCam(camId: MediaDeviceId): Future<Unit, RTVIError> =
         thread.runOnThreadReturningFuture {
             withCall { callClient ->
                 withPromise(thread) { promise ->
@@ -369,7 +369,7 @@ class DailyTransport(
 
     override fun isMicEnabled() = call?.inputs()?.microphone?.isEnabled ?: false
 
-    override fun enableMic(enable: Boolean): Future<Unit, VoiceError> =
+    override fun enableMic(enable: Boolean): Future<Unit, RTVIError> =
         thread.runOnThreadReturningFuture {
             withCall { callClient ->
                 withPromise(thread) { promise ->
@@ -386,7 +386,7 @@ class DailyTransport(
 
     override fun expiry() = thread.assertCurrent { expiry }
 
-    override fun enableCam(enable: Boolean): Future<Unit, VoiceError> =
+    override fun enableCam(enable: Boolean): Future<Unit, RTVIError> =
         thread.runOnThreadReturningFuture {
             withCall { callClient ->
                 withPromise(thread) { promise ->
@@ -431,14 +431,14 @@ class DailyTransport(
         call = null
     }
 
-    private fun <V> withCall(action: (CallClient) -> Future<V, VoiceError>): Future<V, VoiceError> {
+    private fun <V> withCall(action: (CallClient) -> Future<V, RTVIError>): Future<V, RTVIError> {
 
         thread.assertCurrent()
 
         val currentClient = call
 
         return if (currentClient == null) {
-            resolvedPromiseErr(thread, VoiceError.TransportNotInitialized)
+            resolvedPromiseErr(thread, RTVIError.TransportNotInitialized)
         } else {
             return action(currentClient)
         }

@@ -1,12 +1,13 @@
 package ai.rtvi.client.daily
 
-import ai.rtvi.client.VoiceClientOptions
-import ai.rtvi.client.VoiceEventCallbacks
+import ai.rtvi.client.RTVIClientOptions
+import ai.rtvi.client.RTVIClientParams
+import ai.rtvi.client.RTVIEventCallbacks
 import ai.rtvi.client.helper.LLMContext
 import ai.rtvi.client.helper.LLMContextMessage
 import ai.rtvi.client.helper.LLMHelper
+import ai.rtvi.client.result.RTVIError
 import ai.rtvi.client.result.Result
-import ai.rtvi.client.result.VoiceError
 import ai.rtvi.client.types.ActionDescription
 import ai.rtvi.client.types.Config
 import ai.rtvi.client.types.Option
@@ -28,25 +29,28 @@ import org.junit.Test
 class MainTests {
 
     companion object {
-        private val options = VoiceClientOptions(
+        private val options = RTVIClientOptions(
             services = listOf(
                 ServiceRegistration("tts", "cartesia"),
                 ServiceRegistration("llm", "together"),
             ),
-            config = listOf(
-                ServiceConfig(
-                    "tts", listOf(
-                        Option("voice", "79a125e8-cd45-4c13-8a67-188112f4dd22")
-                    )
-                ),
-                ServiceConfig(
-                    "llm", listOf(
-                        Option("model", "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"),
-                        Option(
-                            "initial_messages", Value.Array(
-                                Value.Object(
-                                    "role" to Value.Str("system"),
-                                    "content" to Value.Str("You are a helpful voice assistant.")
+            params = RTVIClientParams(
+                baseUrl = testUrl,
+                config = listOf(
+                    ServiceConfig(
+                        "tts", listOf(
+                            Option("voice", "79a125e8-cd45-4c13-8a67-188112f4dd22")
+                        )
+                    ),
+                    ServiceConfig(
+                        "llm", listOf(
+                            Option("model", "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"),
+                            Option(
+                                "initial_messages", Value.Array(
+                                    Value.Object(
+                                        "role" to Value.Str("system"),
+                                        "content" to Value.Str("You are a helpful voice assistant.")
+                                    )
                                 )
                             )
                         )
@@ -67,8 +71,7 @@ class MainTests {
 
             val client = DailyVoiceClient(
                 context = context,
-                baseUrl = testUrl,
-                callbacks = object : VoiceEventCallbacks() {
+                callbacks = object : RTVIEventCallbacks() {
                     override fun onBackendError(message: String) {
                         throw Exception("onBackendError: $message")
                     }
@@ -78,7 +81,7 @@ class MainTests {
 
             val llmHelper = client.registerHelper("llm", LLMHelper(object : LLMHelper.Callbacks() {}))
 
-            client.start().await()
+            client.connect().await()
 
             Assert.assertEquals(TransportState.Ready, client.state)
 
@@ -151,7 +154,7 @@ class MainTests {
     @Test
     fun testActionInvalid() = runTestWithConnectedClient {
         Assert.assertEquals(
-            Result.Err(VoiceError.ErrorResponse(message = "Action abc123:say not registered")),
+            Result.Err(RTVIError.ErrorResponse(message = "Action abc123:say not registered")),
             client.action(
                 "abc123",
                 "say",
@@ -163,7 +166,7 @@ class MainTests {
     @Test
     fun testGetConfig() = runTestWithConnectedClient {
         Assert.assertEquals(
-            Config(config = options.config),
+            Config(config = options.params.config),
             client.getConfig().await()
         )
     }
