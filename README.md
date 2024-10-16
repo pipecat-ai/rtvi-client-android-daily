@@ -9,7 +9,7 @@ This Android library exposes the `DailyVoiceClient` class, to connect to a Daily
 Add the following dependency to your `build.gradle` file:
 
 ```
-implementation "ai.rtvi:rtvi-client-android-daily:0.2.0"
+implementation "ai.rtvi:rtvi-client-android-daily:0.2.1"
 ```
 
 Instantiate from your code:
